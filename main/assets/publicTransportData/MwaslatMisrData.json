@@ -1,0 +1,132 @@
+[
+    {
+      "Line": "Cairo Line",
+      "Route": "Dream Park - City Stars",
+      "line_number": "M11",
+      "Stops": [
+        "Dream Park",
+        "Pyramids Gardens",
+        "Nahdet Square",
+        "Al-Qasr Al-Aini",
+        "Tahrir",
+        "Al-Esaaf",
+        "Coptic Hospital",
+        "Ramses",
+        "Ghamra",
+        "Abbasiya",
+        "Railway Club",
+        "Al-Azhar University",
+        "Rabaa El Adaweya",
+        "City Stars"
+      ],
+      "Active": true
+    },
+    {
+      "Line": "Cairo Line",
+      "Route": "10th of Ramadan - Saraya Al-Qubba",
+      "line_number": "NA20",
+      "Stops": [
+        "10th of Ramadan",
+        "Jordanian Stand",
+        "Cairo-Ismailia Road",
+        "Hyper One",
+        "Adly Mansour Station",
+        "Alf-Maskan",
+        "New Cairo Military Hospital",
+        "Saraya Al-Qubba Metro Station"
+      ],
+      "Active": true
+    },
+    {
+      "Line": "Cairo Line",
+      "Route": "Fifth Settlement- Tahrir",
+      "line_number": "M12",
+      "Stops": [
+        "Fifth Settlement (Lotus Station)",
+        "AUC",
+        "Air Force Hospital",
+        "Cairo Festival City",
+        "Zahraa Madinat Nasr",
+        "Mustafa El-Nahhas",
+        "Makram Ebeid",
+        "First Abbas",
+        "Al-Azhar University",
+        "Ministry of Finance",
+        "Abbasiya",
+        "Ghamra",
+        "Al-Esaaf",
+        "Tahrir (Abdel Moneim Riyad Stand)"
+      ],
+      "Active": true
+    },
+    {
+      "Line": "Cairo Line",
+      "Route": "Katameya - First Settlement",
+      "line_number": "NC1",
+      "Stops": [
+        "Katameya (Mahmoudia Housing)",
+        "New Cairo Hospital",
+        "GUC",
+        "Arbela Plaza",
+        "Al-Hamd Mosque",
+        "Akhenaton",
+        "Shafa Hospital",
+        "Petro Sport",
+        "Mostafa Kamel Axis",
+        "Jasmine",
+        "First Settlement Stand"
+      ],
+      "Active": true
+    },
+    {
+      "Line": "Cairo Line",
+      "Route": "Dar Misr Al-Andalus - Lotus",
+      "line_number": "NC9",
+      "Stops": [
+        "Dar Misr Al-Andalus (Gate 1)",
+        "Dar Misr Al-Andalus (Gate 2)",
+        "Seashell Hospital",
+        "AUC",
+        "Lotus"
+      ],
+      "Active": true
+    },
+    {
+      "Line": "Cairo Line",
+      "Route": "Al-Yaqout District - Carrefour Madinat Al-Obour",
+      "line_number": "AN4",
+      "Stops": [
+        "Al-Yaqout District",
+        "District 14",
+        "AL-Masa",
+        "Al-Waha",
+        "Al-Fayrouz",
+        "Al-Magd Back Road",
+        "Al-Hurreya Back Road",
+        "New Obour Device",
+        "Al-Shabab Street",
+        "Carrefour Madinat Al-Obour"
+      ],
+      "Active": true
+    },
+    {
+      "Line": "Cairo Line",
+      "Route": "Faisal Street - Ramses",
+      "line_number": "M27",
+      "Stops": [
+        "Faisal Street (28 Stand)",
+        "Al-Marioutiyah",
+        "Al-Arish Street",
+        "Al-Matbaa",
+        "Al-Talbiyah",
+        "Al-Gam'aa Street",
+        "Orman Garden",
+        "Dokki Bridge",
+        "Ministry of Agriculture",
+        "6th of October Bridge",
+        "Abdel Moneim Riad Stand",
+        "Ramses"
+      ],
+      "Active":true
+    }]
+  
