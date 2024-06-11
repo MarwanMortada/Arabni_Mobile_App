@@ -1,0 +1,81 @@
+{
+
+    "lines": [
+      {
+        "line_number": "Line 1",
+        "line": "Red Line",
+        "route": "Helwan - El Marg",
+        "stops": [
+          "Helwan",
+          "Ain Shams",
+          "Wadi Hof",
+          "Hadayeq El Maadi",
+          "Maadi",
+          "Zahraa",
+          "Dar El Salam",
+          "Attaba",
+          "Bab El Louq",
+          "Gamal Abdel Nasser",
+          "Opera",
+          "Sadat",
+          "Shobra",
+          "El Marg"
+        ]
+      },
+      {
+        "line_number": "Line 2",
+        "line": "Green Line",
+        "route": "Shubra El-Kheima - Giza",
+        "stops": [
+          "Shubra El-Kheima",
+          "El-Khalafawy",
+          "St. Teresa",
+          "Massara",
+          "Mezallat",
+          "Kobri El-Qobba",
+          "El-Demerdash",
+          "Manshiet El-Sadr",
+          "Opera",
+          "Sadat",
+          "Ataba",
+          "Mohammed Naguib",
+          "Al-Shohadaa",
+          "Ghamra",
+          "El-Thawra",
+          "Heliopolis Square",
+          "Haroun",
+          "Alf Maskan",
+          "Koleyet El-Banat",
+          "Cairo University",
+          "Dokki",
+          "El Bohoth",
+          "Cairo Fair",
+          "Palestine",
+          "Kozzika",
+          "Giza",
+          "Faisal",
+          "Souq El Gomaa",
+          "Ring Road",
+          "El Monib"
+        ]
+      },
+      {
+        "line_number": "Line 3",
+        "line": "Blue Line",
+        "route": "Attaba - Ain Sokhna (operational), New Administrative Capital (planned)",
+        "stops": [
+          "Attaba",
+          "Ataba Square",
+          "El-Nasser",
+          "Abbassia",
+          "Gomhoureya",
+          "Abu Bakr Al-Sadiq",
+          "Hadayeq El-Qoba",
+          "Ain Sokhna",
+          "Zahraa Al-Maadi",
+          "New Administrative Capital (planned)"
+        ],
+        "note": "Line 3 is under construction. Only stations from Attaba to Ain Sokhna are operational. The data for stations beyond Ain Sokhna is for the planned extension."
+      }
+    ]
+  }
