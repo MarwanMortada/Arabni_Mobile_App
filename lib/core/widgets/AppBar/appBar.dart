@@ -1,4 +1,3 @@
-// commonAppBar.dart
 import 'package:flutter/material.dart';
 
 class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
