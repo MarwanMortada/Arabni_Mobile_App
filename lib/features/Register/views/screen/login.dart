@@ -29,11 +29,13 @@ class _LoginState extends State<Login> {
     super.dispose();
   }
 
-  Widget firebaseUIButton(BuildContext context, String text, VoidCallback onPressed) {
+  Widget firebaseUIButton(
+      BuildContext context, String text, VoidCallback onPressed) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white, backgroundColor: const Color.fromARGB(255, 15, 52, 104),
+        foregroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 15, 52, 104),
         side: const BorderSide(color: Colors.white),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       ),
@@ -130,57 +132,62 @@ class _LoginState extends State<Login> {
                   fontSize: 16,
                 ),
               ),
-              
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton(
-                  onPressed: () async {
-        try {
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-            email: _email.text,
-            password: _password.text,
-          );
-          print("User signed in successfully");
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const Screen()),
-          );
-        } catch (error) {
-          print("Error signing in: $error");
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text("Error"),
-                content: const Text(
-                  "Failed to sign in. Please check your credentials."),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Close the dialog
+                    onPressed: () async {
+                      try {
+                        await FirebaseAuth.instance.signInWithEmailAndPassword(
+                          email: _email.text,
+                          password: _password.text,
+                        );
+                        print("User signed in successfully");
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const Screen()),
+                        );
+                      } catch (error) {
+                        print("Error signing in: $error");
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text("Error"),
+                              content: const Text(
+                                  "Failed to sign in. Please check your credentials."),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context); // Close the dialog
+                                  },
+                                  child: const Text("OK"),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
                     },
-                    child: const Text("OK"),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.transparent, // Black font color
+                      side:
+                          const BorderSide(color: Colors.white), // White border
+                    ),
+                    child: const Text("Log In"),
                   ),
-                ],
-              );
-            },
-          );
-        }
-      },
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white , backgroundColor: Colors.transparent, // Black font color
-        side: const BorderSide(color: Colors.white), // White border
-      ),
-      child: const Text("Log In"),
-    ),
                   const SizedBox(width: 8),
                   TextButton(
                     onPressed: () {
-                      Navigator.of(context).pushNamedAndRemoveUntil('/register/', (route) => false);
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/register/', (route) => false);
                     },
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 8),
                     ),
                     child: const Text(
                       "Register Now!",
@@ -197,7 +204,8 @@ class _LoginState extends State<Login> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const ForgetPasswordScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const ForgetPasswordScreen()),
                       );
                     },
                     child: const Text(

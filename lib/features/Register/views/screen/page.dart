@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class Screen extends StatefulWidget {
   const Screen({Key? key}) : super(key: key);
 
@@ -25,10 +24,10 @@ class _ScreenState extends State<Screen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pushNamedAndRemoveUntil('/login/', (route) => false);
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil('/login/', (route) => false);
           },
         ),
-        
       ),
       body: SingleChildScrollView(
         child: Container(

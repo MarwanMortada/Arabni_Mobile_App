@@ -11,17 +11,16 @@ class Verify extends StatefulWidget {
 class _VerifyState extends State<Verify> {
   @override
   Widget build(BuildContext context) {
-    return  Column(
-        children: [
-          const Text('Please Verify your email'),
-          TextButton(
-            onPressed: () async{
+    return Column(
+      children: [
+        const Text('Please Verify your email'),
+        TextButton(
+            onPressed: () async {
               final user = (FirebaseAuth.instance.currentUser);
               await user?.sendEmailVerification();
             },
-            child: const Text('send email verification')
-          )
-        ],
+            child: const Text('send email verification'))
+      ],
     );
   }
 }

@@ -14,8 +14,6 @@ class ForgetPasswordScreen extends StatefulWidget {
 class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   late final TextEditingController _email;
 
-
-
   @override
   void initState() {
     _email = TextEditingController();
@@ -28,26 +26,30 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
     super.dispose();
   }
 
-  Future passwordReset() async{
-    try{
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: _email.text.trim());
-      showDialog(context: context, builder: (context) {
-        return const AlertDialog(content: Text("Check your E_mail"),
-        );
-      },
-      
+  Future passwordReset() async {
+    try {
+      await FirebaseAuth.instance
+          .sendPasswordResetEmail(email: _email.text.trim());
+      showDialog(
+        context: context,
+        builder: (context) {
+          return const AlertDialog(
+            content: Text("Check your E_mail"),
+          );
+        },
       );
-    } on FirebaseAuthException catch(e) {
+    } on FirebaseAuthException catch (e) {
       print(e);
-      showDialog(context: context, builder: (context) {
-        return AlertDialog(content: Text(e.message.toString()),
-        );
-      },
-      
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: Text(e.message.toString()),
+          );
+        },
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +69,8 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
             ],
           ),
           onPressed: () {
-            Navigator.of(context).pushNamedAndRemoveUntil('/login/', (route) => false);
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil('/login/', (route) => false);
           },
         ),
       ),
@@ -122,16 +125,16 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 25.0), // Corrected padding values
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 25.0), // Corrected padding values
                 ),
                 style: const TextStyle(color: Colors.black),
               ),
-              MaterialButton(onPressed: passwordReset,
-              color: const Color.fromARGB(255, 238, 50, 53),
-              child: const Text("Reset Password"),
+              MaterialButton(
+                onPressed: passwordReset,
+                color: const Color.fromARGB(255, 238, 50, 53),
+                child: const Text("Reset Password"),
               ),
-              
-              
               const SizedBox(height: 25),
               Image.asset(
                 'assets/images/LoginPic.jpg',

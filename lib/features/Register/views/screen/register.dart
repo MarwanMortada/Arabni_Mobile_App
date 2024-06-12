@@ -55,7 +55,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
           onPressed: () {
-            Navigator.of(context).pushNamedAndRemoveUntil('/login/', (route) => false);
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil('/login/', (route) => false);
           },
         ),
       ),
@@ -209,14 +210,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   final email = _email.text;
                   final password = _password.text;
                   try {
-                    final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                    final userCredential = await FirebaseAuth.instance
+                        .createUserWithEmailAndPassword(
                       email: email,
                       password: password,
                     );
                     Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Screen()),
-                      );
+                      context,
+                      MaterialPageRoute(builder: (context) => const Screen()),
+                    );
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
@@ -261,8 +263,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white, backgroundColor: const Color.fromARGB(255, 238, 50, 53),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                  foregroundColor: Colors.white,
+                  backgroundColor: const Color.fromARGB(255, 238, 50, 53),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                 ),
                 child: const Text(
                   'Register',
