@@ -20,6 +20,7 @@ class _BusRoutesState extends State<BusRoutes> {
   TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
   bool _hasError = false;
+  String _selectedTransportType = 'Bus';
 
   @override
   void initState() {
@@ -44,14 +45,11 @@ class _BusRoutesState extends State<BusRoutes> {
         List<Map<dynamic, dynamic>> routesList = [];
         data.forEach((key, value) {
           final routeData = Map<dynamic, dynamic>.from(value);
-          final type = routeData['Type'] as String?;
-          if (type == "Bus (CTA)" || type == "Bus (Mwaslat Misr)") {
-            routesList.add(routeData);
-          }
+          routesList.add(routeData);
         });
         setState(() {
           _allRoutes = routesList;
-          _filteredRoutes = _allRoutes;
+          _filterRoutes();
           _isLoading = false;
           _hasError = false;
         });
@@ -73,11 +71,21 @@ class _BusRoutesState extends State<BusRoutes> {
   void _filterRoutes() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredRoutes = _allRoutes
-          .where((routeData) =>
-              (routeData['Route']?.toString().toLowerCase() ?? '')
-                  .contains(query))
-          .toList();
+      _filteredRoutes = _allRoutes.where((routeData) {
+        final route = routeData['Route']?.toString().toLowerCase() ?? '';
+        final type = routeData['Type']?.toString() ?? '';
+        return route.contains(query) &&
+            (type == _selectedTransportType ||
+                _selectedTransportType == 'Bus' &&
+                    (type == 'Bus (CTA)' || type == 'Bus (Mwaslat Misr)'));
+      }).toList();
+    });
+  }
+
+  void _onTransportTypeSelected(String type) {
+    setState(() {
+      _selectedTransportType = type;
+      _filterRoutes();
     });
   }
 
@@ -111,10 +119,14 @@ class _BusRoutesState extends State<BusRoutes> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildTransportTypeButton('Bus', true),
-                _buildTransportTypeButton('Metro', false),
-                _buildTransportTypeButton('Train', false),
-                _buildTransportTypeButton('Light Rail', false),
+                _buildTransportTypeButton(
+                    'Bus', _selectedTransportType == 'Bus'),
+                _buildTransportTypeButton(
+                    'Metro', _selectedTransportType == 'Metro'),
+                _buildTransportTypeButton(
+                    'Train', _selectedTransportType == 'Train'),
+                _buildTransportTypeButton(
+                    'Light Rail', _selectedTransportType == 'Light Rail'),
               ],
             ),
           ),
@@ -142,7 +154,7 @@ class _BusRoutesState extends State<BusRoutes> {
 
   Widget _buildTransportTypeButton(String text, bool selected) {
     return ElevatedButton(
-      onPressed: () {},
+      onPressed: () => _onTransportTypeSelected(text),
       child: Text(text),
       style: ElevatedButton.styleFrom(
         foregroundColor: selected ? Colors.white : Colors.black,
