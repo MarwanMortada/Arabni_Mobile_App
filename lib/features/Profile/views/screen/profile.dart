@@ -1,6 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:maasapp/core/widgets/sideBar.dart';
+import 'package:maasapp/features/Profile/views/editProfile.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  User? user = FirebaseAuth.instance.currentUser;
+  Map<String, dynamic> userData = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    DatabaseReference databaseReference =
+        FirebaseDatabase.instance.ref('users/${user?.uid}');
+    DataSnapshot snapshot = await databaseReference.get();
+    if (snapshot.exists) {
+      setState(() {
+        userData = Map<String, dynamic>.from(snapshot.value as Map);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,51 +55,7 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color(0xFFFC486E),
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                  icon: Icon(Icons.menu, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ),
-            ),
-            ListTile(
-              title: Text('Plan a Trip'),
-              onTap: () {
-                // Add functionality for Plan a Trip button
-              },
-            ),
-            ListTile(
-              title: Text('Routes & Stops'),
-              onTap: () {
-                // Add functionality for Routes & Stops button
-              },
-            ),
-            ListTile(
-              title: Text('Profile'),
-              onTap: () {
-                Navigator.pop(
-                    context); // Close the drawer if already on profile
-              },
-            ),
-            ListTile(
-              title: Text('Back'),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
-              },
-              leading: Icon(Icons.arrow_back),
-            ),
-          ],
-        ),
-      ),
+      drawer: CommonSideBar(), // Use the CommonSideBar
       body: Column(
         children: [
           Container(
@@ -84,34 +69,55 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 30,
-                      backgroundImage: NetworkImage(
-                        'https://via.placeholder.com/150', // Replace with user's profile image
-                      ),
                     ),
                     SizedBox(height: 8),
-                    Text(
-                      'Username',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          userData['firstname'] ?? 'First Name',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        SizedBox(
+                            width: 4), // Space between first name and last name
+                        Text(
+                          userData['lastname'] ?? 'Last Name',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
-                      '+20100000000',
+                      userData['phone'] ?? '+20100000000',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
                       ),
                     ),
                     Text(
-                      'useremail@gmail.com',
+                      user?.email ?? 'useremail@gmail.com',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
                       ),
                     ),
                   ],
+                ),
+                IconButton(
+                  icon: Icon(Icons.edit, color: Colors.white),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => EditProfileScreen(user: user)),
+                    ).then((_) => _fetchUserData());
+                  },
                 ),
               ],
             ),
@@ -142,6 +148,7 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: () {
+                FirebaseAuth.instance.signOut();
                 Navigator.pushNamedAndRemoveUntil(
                     context, '/login/', (route) => false);
               },

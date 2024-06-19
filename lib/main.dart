@@ -4,8 +4,13 @@ import 'package:maasapp/features/Destination/views/home.dart';
 import 'package:maasapp/features/Lines/viewmodels/busRoutes.dart';
 import 'package:maasapp/features/Lines/viewmodels/busStops.dart';
 import 'package:maasapp/features/Lines/viewmodels/lines.dart';
+import 'package:maasapp/features/Profile/views/editProfile.dart';
+import 'package:maasapp/features/Profile/views/screen/feedback.dart';
+import 'package:maasapp/features/Profile/views/screen/helpCenter.dart';
+import 'package:maasapp/features/Profile/views/screen/manageAccount.dart';
+import 'package:maasapp/features/Profile/views/screen/profile.dart';
 import 'package:maasapp/features/Register/views/screen/forgetPass.dart';
-//import 'package:maasapp/features/Register/views/screen/forgetPass.dart';
+import 'package:maasapp/features/Register/views/screen/forgetPass.dart';
 //import 'package:flutter_screenutil/flutter_screenutil.dart';
 //import 'package:maasapp/core/utils/string_constants.dart';
 //import 'package:maasapp/features/Iternairy/view models/screenUI.dart';
@@ -38,7 +43,7 @@ class MyApp extends StatelessWidget {
               ),
               useMaterial3: true,
             ),
-            home: HomeScreen(),
+            home: Login(),
             routes: {
               '/busRoutes/': (context) => const BusRoutes(
                     selectedLine: '',
@@ -52,6 +57,14 @@ class MyApp extends StatelessWidget {
               '/register/': (context) => const RegisterScreen(),
               '/page/': (context) => const Screen(),
               '/forgetPass/': (context) => const ForgetPasswordScreen(),
+              '/profile/': (context) => ProfileScreen(),
+              '/map/': (context) => MapScreen(),
+              '/editProfile/': (context) => EditProfileScreen(
+                    user: null,
+                  ),
+              '/manageAccount/': (context) => ManageAccountScreen(),
+              '/helpCenter/': (context) => HelpCenterScreen(),
+              '/feedback/': (context) => FeedbackScreen(),
             },
           );
         } else {

@@ -5,6 +5,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+import 'package:maasapp/core/widgets/AppBar/appBar.dart';
+import 'package:maasapp/core/widgets/sideBar.dart';
 import 'dart:convert';
 
 class TripStep {
@@ -33,16 +35,22 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  // Firebase database reference
-  final start = TextEditingController();
-  final end = TextEditingController();
+  final startController = TextEditingController();
+  final endController = TextEditingController();
   late DatabaseReference _dbRef;
   Map<dynamic, dynamic> trips = {}; // State variable to store trips data
   List<TripStep> tripPlan = [];
+  int _currentStep = 0; // Initialize currentStep
 
-  bool isVisible = false;
-  List<LatLng> routpoints = [const LatLng(52.05884, -1.345583)];
+  bool isTripPlanVisible = false;
+  bool isGetRouteVisible = false;
+  List<LatLng> routpoints = [];
   String selectedMode = 'driving-car';
+  MapController mapController = MapController(); // Initialize MapController
+
+  // Default location to be displayed when the screen is loaded
+  LatLng defaultLocation =
+      LatLng(30.033333, 31.233334); // Example: Cairo, Egypt
 
   @override
   void initState() {
@@ -51,33 +59,21 @@ class _MapScreenState extends State<MapScreen> {
     _fetchTripData();
   }
 
-  void _onDatabaseEvent(DatabaseEvent event) {
-    if (event.snapshot != null && event.snapshot is DataSnapshot) {
-      DataSnapshot snapshot = event.snapshot as DataSnapshot;
-      // Now you can work with the DataSnapshot
-      print('Received DataSnapshot: $snapshot');
-    } else {
-      print('Invalid DataSnapshot received');
-    }
-  }
-
   void _fetchTripData() async {
     try {
       final DatabaseEvent event = await _dbRef.once();
       if (event.snapshot.value != null) {
         final data = event.snapshot.value;
-        print(
-            'Root Data Type: ${data.runtimeType}'); // Debugging line to print root data type
         if (data is Map) {
           setState(() {
-            trips = data as Map<dynamic, dynamic>;
+            trips = data;
           });
         } else if (data is List) {
           setState(() {
             trips = data.asMap(); // Convert list to map
           });
         }
-        print('Fetched Trips Data: $trips'); // Debugging line
+        print('Fetched Trips Data: $trips');
       } else {
         print('No data received');
       }
@@ -89,43 +85,45 @@ class _MapScreenState extends State<MapScreen> {
   List<TripStep> _findTrip(String from, String to) {
     print('Searching for trips from: "$from" to: "$to"');
 
+    from = from.trim().toLowerCase();
+    to = to.trim().toLowerCase();
+    List<TripStep> foundTrips = [];
+
     for (var trip in trips.values) {
       print('Checking trip: $trip');
       var stops = trip['Stops'];
       if (stops is List) {
-        print('Trip Stops: $stops'); // Print all stops for debugging
+        int fromIndex = stops
+            .indexWhere((stop) => stop.toString().trim().toLowerCase() == from);
+        int toIndex = stops
+            .indexWhere((stop) => stop.toString().trim().toLowerCase() == to);
 
-        for (int i = 0; i < stops.length - 1; i++) {
-          String stopFrom = stops[i].toString().trim().toLowerCase();
-          String stopTo = stops[i + 1].toString().trim().toLowerCase();
-          String searchFrom = from.trim().toLowerCase();
-          String searchTo = to.trim().toLowerCase();
-
-          print('Checking stops: "$stopFrom" to "$stopTo"');
-
-          if (stopFrom == searchFrom && stopTo == searchTo) {
-            var tripStep = TripStep(
-              from: from,
-              to: to,
-              mode: trip['Type'],
-              output: {
-                'Route': trip['Route'],
-                'Line Number': trip['Line_Number']
-              },
-            );
-            print('Match found: $tripStep');
-            return [tripStep];
-          }
+        if (fromIndex != -1 && toIndex != -1 && fromIndex < toIndex) {
+          List routeStops = stops.sublist(fromIndex, toIndex + 1);
+          var tripStep = TripStep(
+            from: from,
+            to: to,
+            mode: trip['Type'],
+            output: {
+              'Route': trip['Route'],
+              'Line Number': trip['Line_Number'],
+              'Stops': routeStops.join(' -> ')
+            },
+          );
+          print('Match found: $tripStep');
+          foundTrips.add(tripStep);
         }
       }
     }
-    print('No match found');
-    return [];
+    if (foundTrips.isEmpty) {
+      print('No match found');
+    }
+    return foundTrips;
   }
 
   void _searchTrip() {
-    String location = start.text.trim();
-    String destination = end.text.trim();
+    String location = startController.text.trim();
+    String destination = endController.text.trim();
 
     print('Searching for trip from: "$location" to: "$destination"');
 
@@ -133,12 +131,15 @@ class _MapScreenState extends State<MapScreen> {
       List<TripStep> tripPlan = _findTrip(location, destination);
       setState(() {
         this.tripPlan = tripPlan;
+        isTripPlanVisible = tripPlan.isNotEmpty;
+        _currentStep = 0; // Reset currentStep when a new trip plan is found
       });
       if (tripPlan.isNotEmpty) {
         print('Trip found to the destination.');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Trip found to the destination.')),
         );
+        _calculateTimesAndDistances(); // Calculate times and distances after finding trips
       } else {
         print('No trips found to the destination.');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -153,10 +154,104 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  Future<Map<String, dynamic>> _getDistanceAndDuration(
+      LatLng start, LatLng end) async {
+    var url =
+        Uri.parse('https://api.openrouteservice.org/v2/directions/$selectedMode'
+            '?api_key=5b3ce3597851110001cf624824ee2084bbf44bb2b4e345cf2d72f072'
+            '&start=${start.longitude},${start.latitude}'
+            '&end=${end.longitude},${end.latitude}');
+
+    var response = await http.get(url);
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      var segment = data['features'][0]['properties']['segments'][0];
+      return {'distance': segment['distance'], 'duration': segment['duration']};
+    } else {
+      print('Failed to get distance and duration: ${response.statusCode}');
+      return {'distance': 0, 'duration': 0};
+    }
+  }
+
+  Future<void> _calculateTimesAndDistances() async {
+    for (var tripStep in tripPlan) {
+      var stopsList = tripStep.output['Stops']?.split(' -> ') ?? [];
+      for (int i = 0; i < stopsList.length - 1; i++) {
+        var startStop = stopsList[i];
+        var endStop = stopsList[i + 1];
+        var startCoords = await locationFromAddress(startStop);
+        var endCoords = await locationFromAddress(endStop);
+        if (startCoords.isNotEmpty && endCoords.isNotEmpty) {
+          var startLatLng =
+              LatLng(startCoords[0].latitude, startCoords[0].longitude);
+          var endLatLng = LatLng(endCoords[0].latitude, endCoords[0].longitude);
+          var result = await _getDistanceAndDuration(startLatLng, endLatLng);
+          tripStep.output['${startStop}to$endStop'] =
+              'Distance: ${(result['distance'] / 1000).toStringAsFixed(2)} km, Duration: ${(result['duration'] / 60).toStringAsFixed(2)} min';
+        }
+      }
+    }
+    setState(() {});
+  }
+
+  Future<void> _getRoute() async {
+    try {
+      List<Location> startLocation =
+          await locationFromAddress(startController.text);
+      List<Location> endLocation =
+          await locationFromAddress(endController.text);
+
+      if (startLocation.isNotEmpty && endLocation.isNotEmpty) {
+        var startLat = startLocation[0].latitude;
+        var startLng = startLocation[0].longitude;
+        var endLat = endLocation[0].latitude;
+        var endLng = endLocation[0].longitude;
+
+        print('Start coordinates: $startLat, $startLng');
+        print('End coordinates: $endLat, $endLng');
+
+        var url = Uri.parse(
+            'https://api.openrouteservice.org/v2/directions/$selectedMode'
+            '?api_key=5b3ce3597851110001cf624824ee2084bbf44bb2b4e345cf2d72f072'
+            '&start=$startLng,$startLat'
+            '&end=$endLng,$endLat');
+
+        var response = await http.get(url);
+
+        if (response.statusCode == 200) {
+          var data = jsonDecode(response.body);
+          var coordinates = data['features'][0]['geometry']['coordinates'];
+          var duration =
+              data['features'][0]['properties']['segments'][0]['duration'];
+          var dist =
+              data['features'][0]['properties']['segments'][0]['distance'];
+
+          setState(() {
+            routpoints = coordinates
+                .map<LatLng>((coord) => LatLng(coord[1], coord[0]))
+                .toList();
+            travelTimes[selectedMode] = duration.toInt();
+            distance = dist.toInt();
+            startMarker = LatLng(startLat, startLng);
+            endMarker = LatLng(endLat, endLng);
+            _itinerarySteps = data['features'][0]['properties']['segments'][0]
+                ['steps']; // Store the itinerary steps
+            mapController.move(
+                startMarker!, 13.0); // Center the map to the start marker
+          });
+        } else {
+          print('Failed to get route: ${response.statusCode}');
+        }
+      }
+    } catch (e) {
+      print('Error occurred while getting route: $e');
+    }
+  }
+
   @override
   void dispose() {
-    start.dispose();
-    end.dispose();
+    startController.dispose();
+    endController.dispose();
     super.dispose();
   }
 
@@ -175,7 +270,6 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? endMarker;
   List<dynamic> _itinerarySteps = [];
 
-  // Icons for each mode
   Map<String, IconData> modeIcons = {
     'driving-car': Icons.directions_car,
     'cycling-regular': Icons.directions_bike,
@@ -224,7 +318,8 @@ class _MapScreenState extends State<MapScreen> {
         if (placemarks.isNotEmpty) {
           Placemark place = placemarks[0];
           setState(() {
-            start.text = "${place.name}, ${place.locality}, ${place.country}";
+            startController.text =
+                "${place.name}, ${place.locality}, ${place.country}";
           });
         }
       } catch (e) {
@@ -240,312 +335,270 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<void> _getRoute() async {
-    try {
-      List<Location> startLocation = await locationFromAddress(start.text);
-      List<Location> endLocation = await locationFromAddress(end.text);
+  Widget _buildDropdownButton() {
+    return DropdownButton<String>(
+      value: selectedMode,
+      onChanged: (String? newValue) {
+        setState(() {
+          selectedMode = newValue!;
+        });
+      },
+      items: <String>['driving-car', 'cycling-regular', 'foot-walking']
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(modeNames[value]!),
+        );
+      }).toList(),
+    );
+  }
 
-      if (startLocation.isNotEmpty && endLocation.isNotEmpty) {
-        var startLat = startLocation[0].latitude;
-        var startLng = startLocation[0].longitude;
-        var endLat = endLocation[0].latitude;
-        var endLng = endLocation[0].longitude;
+  Widget _buildGetRouteDetails() {
+    return Column(
+      children: [
+        if (routpoints.isNotEmpty && travelTimes[selectedMode]! > 0)
+          Text(
+              'Mode: ${modeNames[selectedMode]}, Duration: ${travelTimes[selectedMode]! ~/ 60} minutes, Distance: ${distance! / 1000} km'),
+        const SizedBox(height: 10),
+        if (_itinerarySteps.isNotEmpty) ...[
+          const Text(
+            'Itinerary Steps:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          for (var step in _itinerarySteps)
+            ListTile(
+              title: Text(step['instruction']),
+              subtitle: Text(
+                  'Distance: ${step['distance']} meters, Duration: ${step['duration']} seconds'),
+            ),
+        ],
+      ],
+    );
+  }
 
-        print('Start coordinates: $startLat, $startLng');
-        print('End coordinates: $endLat, $endLng');
-
-        var url = Uri.parse(
-            'https://api.openrouteservice.org/v2/directions/$selectedMode'
-            '?api_key=5b3ce3597851110001cf624824ee2084bbf44bb2b4e345cf2d72f072'
-            '&start=$startLng,$startLat'
-            '&end=$endLng,$endLat');
-
-        var response = await http.get(url);
-
-        if (response.statusCode == 200) {
-          var data = jsonDecode(response.body);
-          var coordinates = data['features'][0]['geometry']['coordinates'];
-          var duration =
-              data['features'][0]['properties']['segments'][0]['duration'];
-          var dist =
-              data['features'][0]['properties']['segments'][0]['distance'];
-
-          setState(() {
-            routpoints = coordinates
-                .map<LatLng>((coord) => LatLng(coord[1], coord[0]))
-                .toList();
-            travelTimes[selectedMode] =
-                (duration / 60).round(); // convert seconds to minutes and round
-            distance =
-                (dist / 1000).round(); // convert meters to kilometers and round
-            isVisible = true;
-            startMarker = LatLng(startLat, startLng);
-            endMarker = LatLng(endLat, endLng);
-
-            // Update the trip plan
-            tripPlan = [
-              TripStep(
-                from: start.text,
-                to: end.text,
-                mode: selectedMode,
-                output: {
-                  'distance': '${(dist / 1000).toStringAsFixed(2)} km',
-                  'time': '${(duration / 60).toStringAsFixed(2)} min',
-                },
-              ),
-            ];
-          });
-        } else {
-          print('Failed to load route: ${response.reasonPhrase}');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content:
-                    Text('Failed to load route: ${response.reasonPhrase}')),
-          );
-        }
-      }
-    } catch (e) {
-      print('Exception: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to get location: $e')),
+  Widget _buildTripPlanDetails() {
+    if (tripPlan.isEmpty) {
+      // Return a placeholder or message if there are no trips
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text("No trip plan available."),
       );
     }
+
+    return Visibility(
+      visible: isTripPlanVisible,
+      child: Column(
+        children: tripPlan.map((tripStep) {
+          var stopsList = tripStep.output['Stops']?.split(' -> ') ?? [];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tripStep.mode,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4), // Space between mode and line number
+              Text(
+                'Line Number: ${tripStep.output['Line Number']}',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8), // Space between line number and stops
+              ...stopsList.asMap().entries.map((entry) {
+                bool isStart =
+                    entry.value.toLowerCase() == tripStep.from.toLowerCase();
+                bool isEnd =
+                    entry.value.toLowerCase() == tripStep.to.toLowerCase();
+                Color stopColor = isStart || isEnd ? Colors.red : Colors.black;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          children: [
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: stopColor,
+                              ),
+                            ),
+                            if (entry.key != stopsList.length - 1)
+                              Container(
+                                width: 2,
+                                height: 40,
+                                color: stopColor,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            entry.value,
+                            style: TextStyle(
+                                color: stopColor, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (entry.key != stopsList.length - 1)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 18.0),
+                        child: Text(
+                          tripStep.output[
+                                  '${stopsList[entry.key]}to${stopsList[entry.key + 1]}'] ??
+                              '',
+                          style: TextStyle(
+                              color: Colors.grey, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                  ],
+                );
+              }).toList(),
+            ],
+          );
+        }).toList(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Itinerary Plan',
-          style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Color.fromARGB(255, 75, 2, 6)),
-        ),
-        backgroundColor: Colors.white,
+      drawer: CommonSideBar(),
+      appBar: const CommonAppBar(
+        title: 'Arabni',
       ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            double screenWidth = constraints.maxWidth;
-            bool isLargeScreen = screenWidth > 800;
-            double iconSize = isLargeScreen ? 40 : 20;
-            double padding = isLargeScreen ? 16 : 8;
-            double fontSize = isLargeScreen ? 16 : 10;
-
-            return SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.all(padding),
-                child: Column(
-                  children: [
-                    Column(
-                      children: [
-                        Container(
-                          color: const Color(0xFFFC486E),
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  SizedBox(
-                                    width: 280,
-                                    child: Container(
-                                      height: 30,
-                                      child: TextField(
-                                        controller: start,
-                                        style: const TextStyle(
-                                            color: Colors.white),
-                                        decoration: InputDecoration(
-                                          hintText: 'Enter location',
-                                          hintStyle: const TextStyle(
-                                              color: Colors.white),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12.0),
-                                          ),
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                  vertical: 8.0,
-                                                  horizontal: 12.0),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.my_location),
-                                    onPressed: _setCurrentLocation,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  SizedBox(
-                                    width: 280,
-                                    child: Container(
-                                      height: 30,
-                                      child: TextField(
-                                        controller: end,
-                                        style: const TextStyle(
-                                            color: Colors.white),
-                                        decoration: InputDecoration(
-                                          hintText: 'Enter destination',
-                                          hintStyle: const TextStyle(
-                                              color: Colors.white),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12.0),
-                                          ),
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                  vertical: 8.0,
-                                                  horizontal: 12.0),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              height: 400,
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    mapController: mapController, // Add MapController
+                    options: MapOptions(
+                      center: defaultLocation, // Default location
+                      zoom: 13,
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color.fromARGB(234, 255, 255, 255),
-                          ),
-                          onPressed: _searchTrip,
-                          child: const Text('Search for trips'),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: modeNames.keys.map((mode) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                selectedMode = mode;
-                              });
-                              _getRoute();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: selectedMode == mode
-                                  ? Colors.blueAccent
-                                  : Colors.blueAccent,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(modeIcons[mode],
-                                    color: Colors.white, size: iconSize),
-                                const SizedBox(width: 5),
-                                Text(
-                                  modeNames[mode]!,
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: fontSize),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 5),
-                    Container(
-                      height: isVisible ? 200 : 300,
-                      child: Visibility(
-                        visible: isVisible,
-                        child: FlutterMap(
-                          options: MapOptions(
-                            center: routpoints.isNotEmpty
-                                ? routpoints[0]
-                                : LatLng(0, 0),
-                            zoom: 13,
-                          ),
-                          children: [
-                            TileLayer(
-                              urlTemplate:
-                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              userAgentPackageName: 'com.example.app',
-                            ),
-                            PolylineLayer(
-                              polylineCulling: false,
-                              polylines: [
-                                Polyline(
-                                    points: routpoints,
-                                    color: Colors.blue,
-                                    strokeWidth: 9),
-                              ],
-                            ),
-                            if (startMarker != null && endMarker != null)
-                              MarkerLayer(
-                                markers: [
-                                  Marker(
-                                    width: 80.0,
-                                    height: 80.0,
-                                    point: endMarker!,
-                                    child: IconButton(
-                                      onPressed: () {},
-                                      icon: const Icon(Icons.location_on),
-                                      color: Colors.red,
-                                      iconSize: 45,
-                                    ),
-                                  ),
-                                ],
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.example.app',
+                      ),
+                      PolylineLayer(
+                        polylineCulling: false,
+                        polylines: [
+                          Polyline(
+                              points: routpoints,
+                              color: Colors.blue,
+                              strokeWidth: 9),
+                        ],
+                      ),
+                      if (startMarker != null)
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              width: 80.0,
+                              height: 80.0,
+                              point: startMarker!,
+                              child: Icon(
+                                Icons.location_on,
+                                color: Colors.red,
+                                size: 45,
                               ),
+                            ),
                           ],
                         ),
-                      ),
-                    ),
-                    if (isVisible)
-                      Column(
+                      if (endMarker != null)
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              width: 80.0,
+                              height: 80.0,
+                              point: endMarker!,
+                              child: Icon(
+                                Icons.location_on,
+                                color: Colors.red,
+                                size: 45,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    right: 10,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '${modeNames[selectedMode]}: ${travelTimes[selectedMode]} min, $distance km',
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ],
+                          TextField(
+                            controller: startController,
+                            decoration: InputDecoration(
+                              hintText: 'Start Location',
+                              border: OutlineInputBorder(),
+                              fillColor: Colors.white,
+                              filled: true,
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.my_location),
+                                onPressed: _setCurrentLocation,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          TextField(
+                            controller: endController,
+                            decoration: InputDecoration(
+                              hintText: 'Destination',
+                              border: OutlineInputBorder(),
+                              fillColor: Colors.white,
+                              filled: true,
                             ),
                           ),
                         ],
                       ),
-                    Container(
-                      color: Colors.white,
-                      child: tripPlan.isEmpty
-                          ? Center(child: Text('No trip plan found.'))
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: tripPlan.length,
-                              itemBuilder: (context, index) {
-                                final step = tripPlan[index];
-                                return ListTile(
-                                  title: Text('${step.from} to ${step.to}'),
-                                  subtitle: Text(
-                                      'Mode: ${modeNames[step.mode]}, Distance: ${step.output['distance']}, Time: ${step.output['time']}'),
-                                );
-                              },
-                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ExpansionTile(
+              title: const Text('Get Route',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildDropdownButton(),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: _getRoute,
+                      child: const Text('Get Route'),
                     ),
                   ],
                 ),
-              ),
-            );
-          },
+                _buildGetRouteDetails(),
+              ],
+            ),
+            ExpansionTile(
+              title: const Text('Search Trip',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              children: [
+                ElevatedButton(
+                  onPressed: _searchTrip,
+                  child: const Text('Search Trip'),
+                ),
+                _buildTripPlanDetails(),
+              ],
+            ),
+          ],
         ),
       ),
     );

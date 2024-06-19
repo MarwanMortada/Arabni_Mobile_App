@@ -40,7 +40,7 @@ class _LinesScreenState extends State<LinesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CommonAppBar(title: 'Arabni'),
-      drawer: CommonSideBar(),
+      drawer: CommonSideBar(), // Use the CommonSideBar
       body: Column(
         children: [
           Padding(

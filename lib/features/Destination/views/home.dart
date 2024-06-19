@@ -1,44 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:maasapp/core/widgets/sideBar.dart';
-import 'package:maasapp/features/Lines/viewmodels/busRoutes.dart';
+import 'package:maasapp/core/widgets/AppBar/appBar.dart'; // Import CommonAppBar
+import 'package:maasapp/features/Iternairy/view%20models/maps.dart';
+import 'package:maasapp/features/Lines/viewmodels/busRoutes.dart'; // Import BusRoutes
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  User? user = FirebaseAuth.instance.currentUser;
+  String firstName = 'There';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    DatabaseReference databaseReference =
+        FirebaseDatabase.instance.ref('users/${user?.uid}');
+    DataSnapshot snapshot = await databaseReference.get();
+    if (snapshot.exists) {
+      setState(() {
+        firstName = (snapshot.value as Map)['firstname'] ?? 'There';
+      });
+    }
+  }
+
+  void _navigateToMapScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MapScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        iconTheme: IconThemeData(color: Colors.black),
-        elevation: 0,
-        title: Center(
-          child: Text(
-            'Arabni',
-            style: TextStyle(
-              fontFamily: 'Arial',
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-              color: Color(0xFFFC486E),
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_none, color: Colors.black),
-            onPressed: () {},
-          ),
-          CircleAvatar(
-            backgroundColor: Colors.grey,
-            radius: 15,
-            child: ClipOval(
-              child: Image.network(
-                'https://via.placeholder.com/150',
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          SizedBox(width: 16),
-        ],
-      ),
+      appBar: CommonAppBar(title: 'Arabni'), // Use the common app bar widget
       drawer: CommonSideBar(), // Use the common drawer widget
       body: SingleChildScrollView(
         child: Padding(
@@ -47,7 +53,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hi, There',
+                'Hi, $firstName',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -82,6 +88,7 @@ class HomeScreen extends StatelessWidget {
                   contentPadding:
                       EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                 ),
+                onTap: _navigateToMapScreen, // Navigate to MapScreen on tap
               ),
               SizedBox(height: 16),
               Text(
@@ -95,10 +102,8 @@ class HomeScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildFavoritePlaceCard(
-                      'Home 🏡', 'https://via.placeholder.com/150'),
-                  _buildFavoritePlaceCard(
-                      'Work 💻', 'https://via.placeholder.com/150'),
+                  _buildFavoritePlaceCard('Home', Icons.home),
+                  _buildFavoritePlaceCard('Work', Icons.work),
                 ],
               ),
               SizedBox(height: 16),
@@ -128,7 +133,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFavoritePlaceCard(String title, String imageUrl) {
+  Widget _buildFavoritePlaceCard(String title, IconData icon) {
     return Card(
       color: Color(0xFFFC486E),
       shape: RoundedRectangleBorder(
@@ -140,7 +145,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.network(imageUrl, width: 100, height: 100, fit: BoxFit.cover),
+            Icon(icon, size: 80, color: Colors.white), // Use Icon widget
             SizedBox(height: 8),
             Text(
               title,
@@ -187,10 +192,4 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-void main() {
-  runApp(MaterialApp(
-    home: HomeScreen(),
-  ));
 }

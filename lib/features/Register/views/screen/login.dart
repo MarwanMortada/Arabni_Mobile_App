@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:maasapp/features/Destination/views/home.dart';
 import 'package:maasapp/features/Register/views/screen/forgetPass.dart';
-import 'package:maasapp/features/Register/views/screen/page.dart';
 import 'package:maasapp/features/Register/views/screen/register.dart';
 
 class Login extends StatefulWidget {
-  const Login({Key? key});
+  const Login({Key? key}) : super(key: key);
 
   @override
   State<Login> createState() => _LoginState();
@@ -46,92 +46,112 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 30,
-          fontWeight: FontWeight.bold,
-        ),
-        backgroundColor: const Color.fromARGB(255, 4, 24, 50),
-      ),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Container(
-          color: const Color.fromARGB(255, 4, 24, 50),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 1),
+              const SizedBox(height: 40),
               const Text(
                 'Arabni',
                 style: TextStyle(
-                  color: Color.fromARGB(255, 238, 50, 53),
-                  fontSize: 52,
+                  fontFamily: 'Poppins',
+                  color: Color(0xFFFC486E),
+                  fontSize: 52, // Increased font size
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const Text(
                 'Enhancing Urban Mobility',
                 style: TextStyle(
-                  color: Color.fromARGB(255, 249, 248, 248),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Poppins',
+                  color: Colors.black,
+                  fontSize: 18, // Same font size as in the register screen
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 20),
               const Text(
-                "Sign in to continue",
+                'Sign in to continue',
                 style: TextStyle(
-                  color: Color.fromARGB(255, 249, 248, 248),
-                  fontSize: 26,
+                  fontFamily: 'Poppins',
+                  color: Colors.black,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 32),
               TextField(
                 controller: _email,
                 enableSuggestions: false,
                 autocorrect: false,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Email',
-                  labelStyle: TextStyle(
-                    color: Colors.white,
+                  hintText: 'Enter your email',
+                  labelStyle: const TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Colors.black,
                     fontSize: 16,
-                    fontStyle: FontStyle.italic,
                   ),
-                  icon: Icon(Icons.email),
-                  iconColor: Colors.white,
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFFC486E)),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
                 ),
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontStyle: FontStyle.italic,
+                  fontFamily: 'Poppins',
+                  color: Colors.black,
                   fontSize: 16,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _password,
                 obscureText: true,
                 enableSuggestions: false,
                 autocorrect: false,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Password',
-                  labelStyle: TextStyle(
-                    color: Colors.white,
+                  hintText: 'Enter your password',
+                  labelStyle: const TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Colors.black,
                     fontSize: 16,
-                    fontStyle: FontStyle.italic,
                   ),
-                  icon: Icon(Icons.lock),
-                  iconColor: Colors.white,
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFFC486E)),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
                 ),
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontStyle: FontStyle.italic,
+                  fontFamily: 'Poppins',
+                  color: Colors.black,
                   fontSize: 16,
                 ),
               ),
+              const SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -146,7 +166,8 @@ class _LoginState extends State<Login> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const Screen()),
+                              builder: (context) =>
+                                  HomeScreen()), // Navigate to HomeScreen
                         );
                       } catch (error) {
                         print("Error signing in: $error");
@@ -172,57 +193,74 @@ class _LoginState extends State<Login> {
                     },
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      backgroundColor: Colors.transparent, // Black font color
-                      side:
-                          const BorderSide(color: Colors.white), // White border
+                      backgroundColor: Colors.grey[300], // Background color
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 32),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                    child: const Text("Log In"),
+                    child: const Text(
+                      "Login",
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  TextButton(
+                  const SizedBox(width: 16),
+                  ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pushNamedAndRemoveUntil(
                           '/register/', (route) => false);
                     },
-                    style: TextButton.styleFrom(
+                    style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
+                      backgroundColor:
+                          const Color(0xFFFC486E), // Background color
                       padding: const EdgeInsets.symmetric(
-                          vertical: 4, horizontal: 8),
+                          vertical: 12, horizontal: 32),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     child: const Text(
-                      "Register Now!",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const ForgetPasswordScreen()),
-                      );
-                    },
-                    child: const Text(
-                      "Forgot Password?",
+                      "Register",
                       style: TextStyle(
-                        color: Colors.white,
+                        fontFamily: 'Poppins',
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 0.5),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ForgetPasswordScreen()),
+                  );
+                },
+                child: const Text(
+                  "Forgot Password?",
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
               Image.asset(
                 'assets/images/LoginPic.jpg',
-                width: 200,
-                height: 200,
+                width: 250,
+                height: 250,
               ),
             ],
           ),

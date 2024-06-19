@@ -76,8 +76,8 @@ class _BusRoutesState extends State<BusRoutes> {
         final type = routeData['Type']?.toString() ?? '';
         return route.contains(query) &&
             (type == _selectedTransportType ||
-                _selectedTransportType == 'Bus' &&
-                    (type == 'Bus (CTA)' || type == 'Bus (Mwaslat Misr)'));
+                (_selectedTransportType == 'Bus' &&
+                    (type == 'Bus (CTA)' || type == 'Bus (Mwaslat Misr)')));
       }).toList();
     });
   }
@@ -136,7 +136,7 @@ class _BusRoutesState extends State<BusRoutes> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                widget.selectedLine, // Display selected line name here
+                _selectedTransportType, // Display selected transport type here
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16, // Adjust font size as needed

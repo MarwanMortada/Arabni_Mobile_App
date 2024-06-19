@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:maasapp/features/Profile/views/screen/profileScreen.dart';
+import 'package:maasapp/features/Destination/views/home.dart';
+import 'package:maasapp/features/Lines/viewmodels/busRoutes.dart';
+import 'package:maasapp/features/Profile/views/screen/profile.dart';
 
 class CommonSideBar extends StatelessWidget {
   @override
@@ -21,6 +23,16 @@ class CommonSideBar extends StatelessWidget {
             ),
           ),
           ListTile(
+            title: Text('Home'),
+            onTap: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => HomeScreen()),
+                (Route<dynamic> route) => false,
+              );
+            },
+          ),
+          ListTile(
             title: Text('Plan a Trip'),
             onTap: () {
               // Add functionality for Plan a Trip button
@@ -29,7 +41,13 @@ class CommonSideBar extends StatelessWidget {
           ListTile(
             title: Text('Routes & Stops'),
             onTap: () {
-              // Add functionality for Routes & Stops button
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => BusRoutes(
+                          selectedLine: '',
+                        )),
+              );
             },
           ),
           ListTile(

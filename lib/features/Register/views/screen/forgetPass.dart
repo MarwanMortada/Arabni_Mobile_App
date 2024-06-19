@@ -1,7 +1,4 @@
-// ignore_for_file: deprecated_member_use, use_build_context_synchronously
-
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class ForgetPasswordScreen extends StatefulWidget {
@@ -34,7 +31,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
         context: context,
         builder: (context) {
           return const AlertDialog(
-            content: Text("Check your E_mail"),
+            content: Text("Check your email"),
           );
         },
       );
@@ -54,38 +51,20 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 30,
-          fontWeight: FontWeight.bold,
-        ),
-        backgroundColor: const Color.fromARGB(255, 4, 24, 50),
-        leading: IconButton(
-          icon: const Row(
-            children: [
-              Icon(Icons.arrow_back, color: Colors.white),
-              SizedBox(width: 4), // Adding space between icon and text
-            ],
-          ),
-          onPressed: () {
-            Navigator.of(context)
-                .pushNamedAndRemoveUntil('/login/', (route) => false);
-          },
-        ),
-      ),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Container(
-          color: const Color.fromARGB(255, 4, 24, 50),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 1),
+              const SizedBox(height: 40),
               const Text(
                 'Arabni',
                 style: TextStyle(
-                  color: Color.fromARGB(255, 238, 50, 53),
+                  fontFamily: 'Poppins',
+                  color: Color(0xFFFC486E),
                   fontSize: 52,
                   fontWeight: FontWeight.bold,
                 ),
@@ -93,53 +72,79 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
               const Text(
                 'Enhancing Urban Mobility',
                 style: TextStyle(
-                  color: Color.fromARGB(255, 249, 248, 248),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Poppins',
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 20),
               const Text(
                 "Reset your password",
                 style: TextStyle(
-                  color: Color.fromARGB(255, 249, 248, 248),
-                  fontSize: 22,
+                  fontFamily: 'Poppins',
+                  color: Colors.black,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
               TextFormField(
                 controller: _email,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Enter your E-mail',
-                  labelStyle: TextStyle(
-                    color: Colors.black,
-                  ),
+                decoration: InputDecoration(
+                  labelText: 'Email',
                   hintText: 'Enter your email',
-                  hintStyle: TextStyle(
+                  labelStyle: const TextStyle(
+                    fontFamily: 'Poppins',
                     color: Colors.black,
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
+                    fontSize: 16,
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: 25.0), // Corrected padding values
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFFC486E)),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
                 ),
-                style: const TextStyle(color: Colors.black),
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  color: Colors.black,
+                  fontSize: 16,
+                ),
               ),
-              MaterialButton(
+              const SizedBox(height: 32),
+              ElevatedButton(
                 onPressed: passwordReset,
-                color: const Color.fromARGB(255, 238, 50, 53),
-                child: const Text("Reset Password"),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: const Color(0xFFFC486E),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  "Reset Password",
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
-              const SizedBox(height: 25),
+              const SizedBox(height: 32),
               Image.asset(
                 'assets/images/LoginPic.jpg',
-                width: 200,
-                height: 200,
+                width: 250,
+                height: 250,
               ),
             ],
           ),
