@@ -4,16 +4,16 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:maasapp/core/widgets/sideBar.dart'; // Import CommonSideBar
 import 'package:maasapp/core/widgets/AppBar/appBar.dart'; // Import CommonAppBar
 
-class EditProfileScreen extends StatefulWidget {
+class Accountsettings extends StatefulWidget {
   User? user;
 
-  EditProfileScreen({required this.user});
+  Accountsettings({required this.user});
 
   @override
   _EditProfileScreenState createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _EditProfileScreenState extends State<Accountsettings> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _firstnameController;
   late TextEditingController _lastnameController;

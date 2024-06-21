@@ -4,22 +4,16 @@ import 'package:maasapp/features/Destination/views/home.dart';
 import 'package:maasapp/features/Lines/viewmodels/busRoutes.dart';
 import 'package:maasapp/features/Lines/viewmodels/busStops.dart';
 import 'package:maasapp/features/Lines/viewmodels/lines.dart';
-import 'package:maasapp/features/Profile/views/editProfile.dart';
+import 'package:maasapp/features/Profile/views/accountSettings.dart';
 import 'package:maasapp/features/Profile/views/screen/feedback.dart';
 import 'package:maasapp/features/Profile/views/screen/helpCenter.dart';
-import 'package:maasapp/features/Profile/views/screen/manageAccount.dart';
 import 'package:maasapp/features/Profile/views/screen/profile.dart';
 import 'package:maasapp/features/Register/views/screen/forgetPass.dart';
-import 'package:maasapp/features/Register/views/screen/forgetPass.dart';
-//import 'package:flutter_screenutil/flutter_screenutil.dart';
-//import 'package:maasapp/core/utils/string_constants.dart';
-//import 'package:maasapp/features/Iternairy/view models/screenUI.dart';
 import 'package:maasapp/features/Register/views/screen/login.dart';
 import 'package:maasapp/features/Register/views/screen/page.dart';
 import 'package:maasapp/features/Register/views/screen/register.dart';
 import 'package:maasapp/firebase_options.dart';
 import 'package:maasapp/features/Iternairy/view models/maps.dart';
-//import 'features/Iternairy/view models/openstreetmap.dart';
 
 void main() async {
   runApp(const MyApp());
@@ -59,10 +53,9 @@ class MyApp extends StatelessWidget {
               '/forgetPass/': (context) => const ForgetPasswordScreen(),
               '/profile/': (context) => ProfileScreen(),
               '/map/': (context) => MapScreen(),
-              '/editProfile/': (context) => EditProfileScreen(
+              '/accountSettings/': (context) => Accountsettings(
                     user: null,
                   ),
-              '/manageAccount/': (context) => ManageAccountScreen(),
               '/helpCenter/': (context) => HelpCenterScreen(),
               '/feedback/': (context) => FeedbackScreen(),
             },

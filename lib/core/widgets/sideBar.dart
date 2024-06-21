@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:maasapp/features/Destination/views/home.dart';
+import 'package:maasapp/features/Iternairy/view%20models/maps.dart';
 import 'package:maasapp/features/Lines/viewmodels/busRoutes.dart';
 import 'package:maasapp/features/Profile/views/screen/profile.dart';
 
@@ -35,7 +36,10 @@ class CommonSideBar extends StatelessWidget {
           ListTile(
             title: Text('Plan a Trip'),
             onTap: () {
-              // Add functionality for Plan a Trip button
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MapScreen()),
+              );
             },
           ),
           ListTile(

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
@@ -7,7 +8,6 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:maasapp/core/widgets/AppBar/appBar.dart';
 import 'package:maasapp/core/widgets/sideBar.dart';
-import 'dart:convert';
 
 class TripStep {
   final String from;
@@ -45,12 +45,16 @@ class _MapScreenState extends State<MapScreen> {
   bool isTripPlanVisible = false;
   bool isGetRouteVisible = false;
   List<LatLng> routpoints = [];
+  List<Marker> stopMarkers = []; // Add a list for stop markers
   String selectedMode = 'driving-car';
   MapController mapController = MapController(); // Initialize MapController
 
   // Default location to be displayed when the screen is loaded
   LatLng defaultLocation =
       LatLng(30.033333, 31.233334); // Example: Cairo, Egypt
+
+  List<String> startSuggestions = [];
+  List<String> endSuggestions = [];
 
   @override
   void initState() {
@@ -133,6 +137,7 @@ class _MapScreenState extends State<MapScreen> {
         this.tripPlan = tripPlan;
         isTripPlanVisible = tripPlan.isNotEmpty;
         _currentStep = 0; // Reset currentStep when a new trip plan is found
+        stopMarkers = []; // Reset stop markers
       });
       if (tripPlan.isNotEmpty) {
         print('Trip found to the destination.');
@@ -140,6 +145,7 @@ class _MapScreenState extends State<MapScreen> {
           SnackBar(content: Text('Trip found to the destination.')),
         );
         _calculateTimesAndDistances(); // Calculate times and distances after finding trips
+        _addStopMarkers(); // Add markers for each stop
       } else {
         print('No trips found to the destination.');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -210,11 +216,24 @@ class _MapScreenState extends State<MapScreen> {
         print('Start coordinates: $startLat, $startLng');
         print('End coordinates: $endLat, $endLng');
 
+        // Prepare the waypoints
+        List<LatLng> waypoints = [LatLng(startLat, startLng)];
+        for (var marker in stopMarkers) {
+          waypoints.add(marker.point);
+        }
+        waypoints.add(LatLng(endLat, endLng));
+
+        // Build the waypoints query
+        String waypointsQuery = waypoints
+            .map((point) => '${point.longitude},${point.latitude}')
+            .join('|');
+
         var url = Uri.parse(
             'https://api.openrouteservice.org/v2/directions/$selectedMode'
             '?api_key=5b3ce3597851110001cf624824ee2084bbf44bb2b4e345cf2d72f072'
             '&start=$startLng,$startLat'
-            '&end=$endLng,$endLat');
+            '&end=$endLng,$endLat'
+            '&waypoints=$waypointsQuery');
 
         var response = await http.get(url);
 
@@ -245,6 +264,88 @@ class _MapScreenState extends State<MapScreen> {
       }
     } catch (e) {
       print('Error occurred while getting route: $e');
+    }
+  }
+
+  Future<List<String>> getSuggestions(String query) async {
+    final url = 'https://api.openrouteservice.org/geocode/autocomplete';
+    final response = await http.get(
+      Uri.parse(
+          '$url?api_key=5b3ce3597851110001cf624824ee2084bbf44bb2b4e345cf2d72f072&text=$query&boundary.country=EG'), // Restricting to Egypt
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<String> suggestions = [];
+      for (var result in data['features']) {
+        suggestions.add(result['properties']['label']);
+      }
+      return suggestions;
+    } else {
+      throw Exception('Failed to load suggestions');
+    }
+  }
+
+  Future<LatLng?> getLatLngFromAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+      if (locations.isNotEmpty) {
+        return LatLng(locations[0].latitude, locations[0].longitude);
+      }
+    } catch (e) {
+      print('Error getting LatLng from address: $e');
+    }
+    return null;
+  }
+
+  void _onStartChanged(String query) async {
+    if (query.isNotEmpty) {
+      final suggestions = await getSuggestions(query);
+      setState(() {
+        startSuggestions = suggestions;
+      });
+    } else {
+      setState(() {
+        startSuggestions = [];
+      });
+    }
+  }
+
+  void _onEndChanged(String query) async {
+    if (query.isNotEmpty) {
+      final suggestions = await getSuggestions(query);
+      setState(() {
+        endSuggestions = suggestions;
+      });
+    } else {
+      setState(() {
+        endSuggestions = [];
+      });
+    }
+  }
+
+  void _addStopMarkers() async {
+    for (var tripStep in tripPlan) {
+      var stopsList = tripStep.output['Stops']?.split(' -> ') ?? [];
+      for (var stop in stopsList) {
+        LatLng? stopLatLng = await getLatLngFromAddress(stop);
+        if (stopLatLng != null) {
+          setState(() {
+            stopMarkers.add(
+              Marker(
+                width: 80.0,
+                height: 80.0,
+                point: stopLatLng,
+                child: const Icon(
+                  Icons.location_on,
+                  color: Colors.blue,
+                  size: 45,
+                ),
+              ),
+            );
+          });
+        }
+      }
     }
   }
 
@@ -499,24 +600,20 @@ class _MapScreenState extends State<MapScreen> {
                               strokeWidth: 9),
                         ],
                       ),
-                      if (startMarker != null)
-                        MarkerLayer(
-                          markers: [
+                      MarkerLayer(
+                        markers: [
+                          if (startMarker != null)
                             Marker(
                               width: 80.0,
                               height: 80.0,
                               point: startMarker!,
-                              child: Icon(
+                              child: const Icon(
                                 Icons.location_on,
                                 color: Colors.red,
                                 size: 45,
                               ),
                             ),
-                          ],
-                        ),
-                      if (endMarker != null)
-                        MarkerLayer(
-                          markers: [
+                          if (endMarker != null)
                             Marker(
                               width: 80.0,
                               height: 80.0,
@@ -527,8 +624,9 @@ class _MapScreenState extends State<MapScreen> {
                                 size: 45,
                               ),
                             ),
-                          ],
-                        ),
+                          ...stopMarkers, // Add stop markers
+                        ],
+                      ),
                     ],
                   ),
                   Positioned(
@@ -539,28 +637,147 @@ class _MapScreenState extends State<MapScreen> {
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
-                          TextField(
-                            controller: startController,
-                            decoration: InputDecoration(
-                              hintText: 'Start Location',
-                              border: OutlineInputBorder(),
-                              fillColor: Colors.white,
-                              filled: true,
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.my_location),
-                                onPressed: _setCurrentLocation,
+                          Column(
+                            children: [
+                              TextField(
+                                controller: startController,
+                                decoration: InputDecoration(
+                                  hintText: 'Start Location',
+                                  border: const OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.my_location),
+                                    onPressed: _setCurrentLocation,
+                                  ),
+                                ),
+                                onChanged: _onStartChanged,
                               ),
-                            ),
+                              if (startSuggestions.isNotEmpty)
+                                Container(
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        spreadRadius: 2,
+                                        blurRadius: 5,
+                                        offset: Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Expanded(
+                                        child: ListView.builder(
+                                          itemCount: startSuggestions.length,
+                                          itemBuilder: (context, index) {
+                                            return ListTile(
+                                              title:
+                                                  Text(startSuggestions[index]),
+                                              onTap: () async {
+                                                startController.text =
+                                                    startSuggestions[index];
+                                                startSuggestions = [];
+                                                setState(() {});
+                                                LatLng? latLng =
+                                                    await getLatLngFromAddress(
+                                                        startSuggestions[
+                                                            index]);
+                                                if (latLng != null) {
+                                                  setState(() {
+                                                    startMarker = latLng;
+                                                  });
+                                                  mapController.move(
+                                                      latLng, 13.0);
+                                                }
+                                              },
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            startSuggestions = [];
+                                          });
+                                        },
+                                        child: const Text("Close"),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 5),
-                          TextField(
-                            controller: endController,
-                            decoration: InputDecoration(
-                              hintText: 'Destination',
-                              border: OutlineInputBorder(),
-                              fillColor: Colors.white,
-                              filled: true,
-                            ),
+                          Column(
+                            children: [
+                              TextField(
+                                controller: endController,
+                                decoration: InputDecoration(
+                                  hintText: 'Destination',
+                                  border: const OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                ),
+                                onChanged: _onEndChanged,
+                              ),
+                              if (endSuggestions.isNotEmpty)
+                                Container(
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        spreadRadius: 2,
+                                        blurRadius: 5,
+                                        offset: Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Expanded(
+                                        child: ListView.builder(
+                                          itemCount: endSuggestions.length,
+                                          itemBuilder: (context, index) {
+                                            return ListTile(
+                                              title:
+                                                  Text(endSuggestions[index]),
+                                              onTap: () async {
+                                                endController.text =
+                                                    endSuggestions[index];
+                                                endSuggestions = [];
+                                                setState(() {});
+                                                LatLng? latLng =
+                                                    await getLatLngFromAddress(
+                                                        endSuggestions[index]);
+                                                if (latLng != null) {
+                                                  setState(() {
+                                                    endMarker = latLng;
+                                                  });
+                                                  mapController.move(
+                                                      latLng, 13.0);
+                                                }
+                                              },
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            endSuggestions = [];
+                                          });
+                                        },
+                                        child: const Text("Close"),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
                         ],
                       ),

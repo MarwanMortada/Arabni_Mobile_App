@@ -17,8 +17,51 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
     return FutureBuilder<DataSnapshot>(
       future: databaseReference.get(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done &&
-            snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // Display a loading indicator while the data is being fetched
+          return AppBar(
+            backgroundColor: Colors.white,
+            iconTheme: IconThemeData(color: Colors.black),
+            elevation: 0,
+            title: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFFC486E),
+              ),
+            ),
+          );
+        } else if (snapshot.hasError) {
+          // Handle errors
+          return AppBar(
+            backgroundColor: Colors.white,
+            iconTheme: IconThemeData(color: Colors.black),
+            elevation: 0,
+            title: Center(
+              child: Text(
+                'Error',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Color(0xFFFC486E),
+                ),
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.notifications_none, color: Colors.black),
+                onPressed: () {},
+              ),
+              CircleAvatar(
+                backgroundColor: Colors.grey,
+                radius: 15,
+                child: ClipOval(
+                  child: Image.network('https://via.placeholder.com/150'),
+                ),
+              ),
+              SizedBox(width: 16),
+            ],
+          );
+        } else if (snapshot.hasData && snapshot.data!.value != null) {
           final userData =
               Map<String, dynamic>.from(snapshot.data!.value as Map);
           final profileImage =
@@ -63,6 +106,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
             ],
           );
         } else {
+          // Handle the case where there is no data
           return AppBar(
             backgroundColor: Colors.white,
             iconTheme: IconThemeData(color: Colors.black),

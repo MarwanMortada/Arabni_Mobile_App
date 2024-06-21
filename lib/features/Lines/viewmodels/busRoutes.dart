@@ -25,6 +25,7 @@ class _BusRoutesState extends State<BusRoutes> {
   @override
   void initState() {
     super.initState();
+    _selectedTransportType = widget.selectedLine; // Set initial transport type
     _fetchRoutes();
     _searchController.addListener(_filterRoutes);
   }
@@ -87,6 +88,19 @@ class _BusRoutesState extends State<BusRoutes> {
       _selectedTransportType = type;
       _filterRoutes();
     });
+  }
+
+  Color _getRouteColor(String route) {
+    switch (route) {
+      case 'Helwan - El Marg':
+        return const Color.fromARGB(255, 249, 19, 3);
+      case 'Shubra El-Kheima - Giza':
+        return Colors.green;
+      case 'Attaba - Ain Sokhna (operational), New Administrative Capital (planned)':
+        return Color(0xFF489BFC);
+      default:
+        return Color(0xFFFC486E); // Default color
+    }
   }
 
   @override
@@ -187,10 +201,12 @@ class _BusRoutesState extends State<BusRoutes> {
         final route = routeData['Route'] ?? 'Unknown Route';
         final stops = routeData['Stops'] ?? [];
         final type = routeData['Type'] ?? 'Unknown Type';
+        final routeColor = _getRouteColor(route);
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
           child: Card(
-            color: Color(0xFFFC486E),
+            color: routeColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),

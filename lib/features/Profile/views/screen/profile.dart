@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:maasapp/core/widgets/sideBar.dart';
-import 'package:maasapp/features/Profile/views/editProfile.dart';
+import 'package:maasapp/features/Profile/views/accountSettings.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -109,24 +109,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
-                IconButton(
-                  icon: Icon(Icons.edit, color: Colors.white),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => EditProfileScreen(user: user)),
-                    ).then((_) => _fetchUserData());
-                  },
-                ),
               ],
             ),
           ),
           ListTile(
             leading: Icon(Icons.manage_accounts),
-            title: Text('Manage Account'),
+            title: Text('Edit Account'),
             onTap: () {
-              Navigator.pushNamed(context, '/manageAccount/');
+              Navigator.pushNamed(context, '/accountSettings/');
             },
           ),
           ListTile(
@@ -153,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     context, '/login/', (route) => false);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color.fromARGB(255, 248, 20, 4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
