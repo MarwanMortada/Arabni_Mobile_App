@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
               ),
               useMaterial3: true,
             ),
-            home: Login(),
+            home: MapScreen(),
             routes: {
               '/busRoutes/': (context) => const BusRoutes(
                     selectedLine: '',

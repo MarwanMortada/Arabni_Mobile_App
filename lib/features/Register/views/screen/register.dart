@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:maasapp/features/Destination/views/home.dart';
 import 'package:maasapp/features/Register/views/screen/page.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -149,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       // Navigate to next screen
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const Screen()),
+                        MaterialPageRoute(builder: (context) => HomeScreen()),
                       );
 
                       // Show success dialog
