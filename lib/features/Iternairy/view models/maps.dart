@@ -51,7 +51,7 @@ class _MapScreenState extends State<MapScreen> {
 
   // Default location to be displayed when the screen is loaded
   LatLng defaultLocation =
-      LatLng(30.033333, 31.233334); // Example: Cairo, Egypt
+      const LatLng(30.033333, 31.233334); // Example: Cairo, Egypt
 
   List<String> startSuggestions = [];
   List<String> endSuggestions = [];
@@ -86,79 +86,84 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  List<TripStep> _findTrip(String from, String to) {
-    print('Searching for trips from: "$from" to: "$to"');
+List<TripStep> _findTrip(String from, String to, {bool reverseStops = false}) {
+  print('Searching for trips from: "$from" to: "$to"');
 
-    from = from.trim().toLowerCase();
-    to = to.trim().toLowerCase();
-    List<TripStep> foundTrips = [];
+  from = from.trim().toLowerCase();
+  to = to.trim().toLowerCase();
+  List<TripStep> foundTrips = [];
 
-    for (var trip in trips.values) {
-      print('Checking trip: $trip');
-      var stops = trip['Stops'];
-      if (stops is List) {
-        int fromIndex = stops
-            .indexWhere((stop) => stop.toString().trim().toLowerCase() == from);
-        int toIndex = stops
-            .indexWhere((stop) => stop.toString().trim().toLowerCase() == to);
+  for (var trip in trips.values) {
+    print('Checking trip: $trip');
+    var stops = trip['Stops'];
+    if (stops is List) {
+      int fromIndex = stops.indexWhere((stop) => stop.toString().trim().toLowerCase() == from);
+      int toIndex = stops.indexWhere((stop) => stop.toString().trim().toLowerCase() == to);
 
-        if (fromIndex != -1 && toIndex != -1 && fromIndex < toIndex) {
-          List routeStops = stops.sublist(fromIndex, toIndex + 1);
-          var tripStep = TripStep(
-            from: from,
-            to: to,
-            mode: trip['Type'],
-            output: {
-              'Route': trip['Route'],
-              'Line Number': trip['Line_Number'],
-              'Stops': routeStops.join(' -> ')
-            },
-          );
-          print('Match found: $tripStep');
-          foundTrips.add(tripStep);
+      if (fromIndex != -1 && toIndex != -1 && fromIndex < toIndex) {
+        List routeStops = stops.sublist(fromIndex, toIndex + 1);
+        if (reverseStops) {
+          routeStops = routeStops.reversed.toList();
         }
+        var tripStep = TripStep(
+          from: from,
+          to: to,
+          mode: trip['Type'],
+          output: {
+            'Route': trip['Route'],
+            'Line Number': trip['Line_Number'],
+            'Stops': routeStops.join(' -> ')
+          },
+        );
+        print('Match found: $tripStep');
+        foundTrips.add(tripStep);
       }
     }
-    if (foundTrips.isEmpty) {
-      print('No match found');
-    }
-    return foundTrips;
   }
+  if (foundTrips.isEmpty) {
+    print('No match found');
+  }
+  return foundTrips;
+}
 
-  void _searchTrip() {
-    String location = startController.text.trim();
-    String destination = endController.text.trim();
+void _searchTrip() {
+  String location = startController.text.trim();
+  String destination = endController.text.trim();
 
-    print('Searching for trip from: "$location" to: "$destination"');
+  print('Searching for trip from: "$location" to: "$destination"');
 
-    if (location.isNotEmpty && destination.isNotEmpty) {
-      List<TripStep> tripPlan = _findTrip(location, destination);
-      setState(() {
-        this.tripPlan = tripPlan;
-        isTripPlanVisible = tripPlan.isNotEmpty;
-        _currentStep = 0; // Reset currentStep when a new trip plan is found
-        stopMarkers = []; // Reset stop markers
-      });
-      if (tripPlan.isNotEmpty) {
-        print('Trip found to the destination.');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Trip found to the destination.')),
-        );
-        _calculateTimesAndDistances(); // Calculate times and distances after finding trips
-        _addStopMarkers(); // Add markers for each stop
-      } else {
-        print('No trips found to the destination.');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No trips found to the destination.')),
-        );
-      }
-    } else {
-      print('Location or destination is empty.');
+  if (location.isNotEmpty && destination.isNotEmpty) {
+    List<TripStep> tripPlan = _findTrip(location, destination);
+    if (tripPlan.isEmpty) {
+      tripPlan = _findTrip(destination, location, reverseStops: true); // Handle swapped scenario with reversed stops
+    }
+    setState(() {
+      this.tripPlan = tripPlan;
+      isTripPlanVisible = tripPlan.isNotEmpty;
+      _currentStep = 0; // Reset currentStep when a new trip plan is found
+      stopMarkers = []; // Reset stop markers
+    });
+    if (tripPlan.isNotEmpty) {
+      print('Trip found to the destination.');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter both location and destination.')),
+        SnackBar(content: Text('Trip found to the destination.')),
+      );
+      _calculateTimesAndDistances(); // Calculate times and distances after finding trips
+      _addStopMarkers(); // Add markers for each stop
+    } else {
+      print('No trips found to the destination.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No trips found to the destination.')),
       );
     }
+  } else {
+    print('Location or destination is empty.');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please enter both location and destination.')),
+    );
   }
+}
+
 
   Future<Map<String, dynamic>> _getDistanceAndDuration(
       LatLng start, LatLng end) async {
@@ -477,93 +482,144 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _buildTripPlanDetails() {
-    if (tripPlan.isEmpty) {
-      // Return a placeholder or message if there are no trips
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Text("No trip plan available."),
-      );
-    }
-
-    return Visibility(
-      visible: isTripPlanVisible,
-      child: Column(
-        children: tripPlan.map((tripStep) {
-          var stopsList = tripStep.output['Stops']?.split(' -> ') ?? [];
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                tripStep.mode,
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4), // Space between mode and line number
-              Text(
-                'Line Number: ${tripStep.output['Line Number']}',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8), // Space between line number and stops
-              ...stopsList.asMap().entries.map((entry) {
-                bool isStart =
-                    entry.value.toLowerCase() == tripStep.from.toLowerCase();
-                bool isEnd =
-                    entry.value.toLowerCase() == tripStep.to.toLowerCase();
-                Color stopColor = isStart || isEnd ? Colors.red : Colors.black;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Column(
-                          children: [
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: stopColor,
-                              ),
-                            ),
-                            if (entry.key != stopsList.length - 1)
-                              Container(
-                                width: 2,
-                                height: 40,
-                                color: stopColor,
-                              ),
-                          ],
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            entry.value,
-                            style: TextStyle(
-                                color: stopColor, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (entry.key != stopsList.length - 1)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 18.0),
-                        child: Text(
-                          tripStep.output[
-                                  '${stopsList[entry.key]}to${stopsList[entry.key + 1]}'] ??
-                              '',
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                  ],
-                );
-              }).toList(),
-            ],
-          );
-        }).toList(),
-      ),
+Widget _buildTripPlanDetails() {
+  if (tripPlan.isEmpty) {
+  
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      //child: Text("No trip plan available."),
     );
   }
+
+  return Visibility(
+  visible: isTripPlanVisible,
+  child: Column(
+    children: tripPlan.asMap().entries.map((entry) {
+      int index = entry.key;
+      TripStep tripStep = entry.value;
+      var stopsList = tripStep.output['Stops']?.split(' -> ') ?? [];
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (index > 0)
+            Divider(
+              color: Colors.grey,
+              thickness: 2,
+            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.pink,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${index + 1}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (stopsList.length > 1)
+                    Container(
+                      width: 2,
+                      height: 40.0 * stopsList.length,
+                      color: Colors.pink,
+                    ),
+                ],
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tripStep.mode,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4), // Space between mode and line number
+                    Text(
+                      'Line Number: ${tripStep.output['Line Number']}',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8), // Space between line number and stops
+                    ...stopsList.asMap().entries.map((stopEntry) {
+                      int stopIndex = stopEntry.key;
+                      String stop = stopEntry.value;
+                      bool isStart = stop.toLowerCase() == tripStep.from.toLowerCase();
+                      bool isEnd = stop.toLowerCase() == tripStep.to.toLowerCase();
+                      Color stopColor = isStart || isEnd ? Colors.red : Colors.black;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Column(
+                                children: [
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: stopColor,
+                                    ),
+                                  ),
+                                  if (stopIndex != stopsList.length - 1)
+                                    Container(
+                                      width: 2,
+                                      height: 40,
+                                      color: stopColor,
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  stop,
+                                  style: TextStyle(
+                                      color: stopColor, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (stopIndex != stopsList.length - 1)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 18.0),
+                              child: Text(
+                                tripStep.output[
+                                        '${stopsList[stopIndex]}to${stopsList[stopIndex + 1]}'] ??
+                                    '',
+                                style: TextStyle(
+                                    color: Colors.grey, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                        ],
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }).toList(),
+  ),
+);
+}
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -618,7 +674,7 @@ class _MapScreenState extends State<MapScreen> {
                               width: 80.0,
                               height: 80.0,
                               point: endMarker!,
-                              child: Icon(
+                              child: const Icon(
                                 Icons.location_on,
                                 color: Colors.red,
                                 size: 45,
@@ -663,7 +719,7 @@ class _MapScreenState extends State<MapScreen> {
                                         color: Colors.black.withOpacity(0.1),
                                         spreadRadius: 2,
                                         blurRadius: 5,
-                                        offset: Offset(0, 3),
+                                        offset: const Offset(0, 3),
                                       ),
                                     ],
                                   ),
@@ -715,9 +771,9 @@ class _MapScreenState extends State<MapScreen> {
                             children: [
                               TextField(
                                 controller: endController,
-                                decoration: InputDecoration(
+                                decoration: const InputDecoration(
                                   hintText: 'Destination',
-                                  border: const OutlineInputBorder(),
+                                  border: OutlineInputBorder(),
                                   fillColor: Colors.white,
                                   filled: true,
                                 ),
@@ -733,7 +789,7 @@ class _MapScreenState extends State<MapScreen> {
                                         color: Colors.black.withOpacity(0.1),
                                         spreadRadius: 2,
                                         blurRadius: 5,
-                                        offset: Offset(0, 3),
+                                        offset: const Offset(0, 3),
                                       ),
                                     ],
                                   ),
@@ -787,6 +843,7 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
             ExpansionTile(
+              initiallyExpanded: true, // Ensure the tile is expanded by default
               title: const Text('Get Route',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               children: [
@@ -805,6 +862,7 @@ class _MapScreenState extends State<MapScreen> {
               ],
             ),
             ExpansionTile(
+              initiallyExpanded: true, // Ensure the tile is expanded by default
               title: const Text('Search Trip',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               children: [
